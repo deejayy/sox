@@ -1,11 +1,13 @@
 {$O-}
 { VERSION 0.38, last modify: 2002/10/19 }
+{ VERSION 0.39, last modify: 2003/03/17 }
+{ VERSION 0.45, last modify: 2003/03/19 }
 unit sox;
 
 interface
 
-procedure delay( ms: longword );
 procedure f_error( str: string );
+procedure delay( ms: longword );
 
 function  initwsa: longint;
 function  createsocket: longint;
@@ -15,12 +17,22 @@ function  connect( socket: longint; host: longint; port: integer ): longint; ove
 function  sendstr( socket: longint; s: string ): longint;
 function  sendbuf( socket: longint; buf: pointer; size: longint ): longint;
 
+function  receivestr( socket: longint; var s: string ): longint;
+function  receivebuf( socket: longint; buf: pointer ): longint;
+
 procedure disconnect( socket: longint );
 function  closewsa: longint;
 
 implementation
 
 uses winsock, windows;
+
+procedure f_error( str: string );
+  begin
+    messagebox( 0, pchar( str ), 'error', 0 );
+    closewsa;
+    exitprocess( 1 );
+  end;
 
 procedure delay( ms: longword );
   var
@@ -33,13 +45,6 @@ procedure delay( ms: longword );
     repeat
     until gettickcount - firsttickcount >= ms;
 
-  end;
-
-procedure f_error( str: string );
-  begin
-    messagebox( 0, pchar( str ), 'error', 0 );
-    closewsa;
-    exitprocess( 1 );
   end;
 
 function initwsa: longint;
@@ -103,6 +108,25 @@ function sendstr( socket: longint; s: string ): longint;
 function  sendbuf( socket: longint; buf: pointer; size: longint ): longint;
   begin
     result := send( socket, buf^, size, 0 );
+  end;
+
+function  receivestr( socket: longint; var s: string ): longint;
+  var
+
+    ch: char;
+
+  begin
+    s := '';
+    repeat
+      recv( socket, ch, 1, 0 );
+      s := s + ch;
+    until ch = #$0A;
+    result := 0;
+  end;
+
+function  receivebuf( socket: longint; buf: pointer ): longint;
+  begin
+    result := 0;
   end;
 
 procedure disconnect( socket: longint );
